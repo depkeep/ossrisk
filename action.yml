@@ -1,0 +1,46 @@
+name: 'ossrisk'
+description: 'Scan dependencies for EOL versions, CVEs, and abandonment signals'
+author: 'DepKeep'
+
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'Path to the project directory'
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Exit 1 if any dependency reaches this risk level or above (none|low|medium|high|critical)'
+    required: false
+    default: 'high'
+  no-eol:
+    description: 'Skip EOL checks'
+    required: false
+    default: 'false'
+  no-cve:
+    description: 'Skip CVE checks'
+    required: false
+    default: 'false'
+  no-activity:
+    description: 'Skip abandonment/staleness checks'
+    required: false
+    default: 'false'
+  no-outdated:
+    description: 'Skip latest-version checks'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'GitHub token for posting a PR comment with the report'
+    required: false
+    default: ''
+
+outputs:
+  risk-level:
+    description: 'Highest risk level found across all dependencies'
+    value: ${{ steps.run.outputs.risk-level }}
+
+runs:
+  using: 'node20'
+  main: 'dist/action/main.js'

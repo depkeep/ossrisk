@@ -1,0 +1,49 @@
+const ABANDONED_MONTHS = 24;
+const STALE_MONTHS = 12;
+function monthsSince(date) {
+    return (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+}
+async function lastNpmRelease(name) {
+    const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`, {
+        headers: { Accept: 'application/json' },
+    });
+    if (!res.ok)
+        return null;
+    const data = await res.json();
+    const modified = data.time?.modified;
+    return modified ? new Date(modified) : null;
+}
+async function lastPypiRelease(name) {
+    const res = await fetch(`https://pypi.org/pypi/${encodeURIComponent(name)}/json`);
+    if (!res.ok)
+        return null;
+    const data = await res.json();
+    const files = data.releases[data.info.version];
+    if (!files?.length)
+        return null;
+    return new Date(files[0].upload_time);
+}
+export async function checkActivity(dep) {
+    try {
+        let last = null;
+        if (dep.ecosystem === 'npm')
+            last = await lastNpmRelease(dep.name);
+        if (dep.ecosystem === 'pypi')
+            last = await lastPypiRelease(dep.name);
+        if (!last)
+            return [];
+        const months = Math.floor(monthsSince(last));
+        const dateStr = last.toISOString().split('T')[0];
+        if (months >= ABANDONED_MONTHS) {
+            return [{ type: 'abandoned', lastReleaseDate: dateStr, monthsSince: months }];
+        }
+        if (months >= STALE_MONTHS) {
+            return [{ type: 'stale', lastReleaseDate: dateStr, monthsSince: months }];
+        }
+    }
+    catch {
+        // Registry unreachable — not a failure condition
+    }
+    return [];
+}
+//# sourceMappingURL=activity.js.map

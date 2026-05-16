@@ -1,0 +1,51 @@
+{
+  "name": "ossrisk",
+  "version": "0.1.0",
+  "description": "Scan dependencies for long-term viability risk: EOL versions, CVEs, and abandonment signals",
+  "type": "module",
+  "bin": {
+    "ossrisk": "./dist/src/cli.js"
+  },
+  "main": "./dist/src/scanner.js",
+  "types": "./dist/src/scanner.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/scanner.d.ts",
+      "default": "./dist/src/scanner.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": ["security", "dependencies", "cve", "eol", "supply-chain", "sbom", "cli"],
+  "author": "DepKeep <hello@depkeep.com>",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/depkeep/ossrisk.git"
+  },
+  "homepage": "https://github.com/depkeep/ossrisk#readme",
+  "bugs": {
+    "url": "https://github.com/depkeep/ossrisk/issues"
+  }
+}
