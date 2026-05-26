@@ -55,6 +55,7 @@ export function renderTable(result: ScanResult): string {
       if (s.type === 'abandoned') return `no release in ${s.monthsSince}mo`;
       if (s.type === 'stale')     return `last release ${s.monthsSince}mo ago`;
       if (s.type === 'outdated')  return `latest ${s.latestVersion}`;
+      if (s.type === 'typosquat') return `possible typosquat of ${s.suspectedTarget}`;
     }).join('  ');
 
     const isClean = dep.riskLevel === 'none';

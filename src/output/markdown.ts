@@ -45,6 +45,7 @@ export function renderMarkdown(result: ScanResult): string {
       if (s.type === 'abandoned') return `No release in ${s.monthsSince} months (last: ${s.lastReleaseDate})`;
       if (s.type === 'stale')     return `Last release ${s.monthsSince} months ago (${s.lastReleaseDate})`;
       if (s.type === 'outdated')  return `Newer version available: ${s.latestVersion}`;
+      if (s.type === 'typosquat') return `Possible typosquat of \`${s.suspectedTarget}\` (${s.reason})`;
     }).join('<br>');
 
     lines.push(

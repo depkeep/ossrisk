@@ -38,7 +38,20 @@ export interface OutdatedSignal {
   latestVersion: string;
 }
 
-export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal;
+export interface TyposquatSignal {
+  type: 'typosquat';
+  suspectedTarget: string;
+  reason: 'edit-distance' | 'homoglyph';
+  distance: number;
+}
+
+export type RiskSignal =
+  | CveSignal
+  | EolSignal
+  | AbandonedSignal
+  | StaleSignal
+  | OutdatedSignal
+  | TyposquatSignal;
 
 export interface DependencyResult {
   name: string;
@@ -73,4 +86,5 @@ export interface ScanOptions {
   noCve: boolean;
   noActivity: boolean;
   noOutdated: boolean;
+  noTyposquat: boolean;
 }

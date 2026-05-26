@@ -39,6 +39,8 @@ export function renderMarkdown(result) {
                 return `Last release ${s.monthsSince} months ago (${s.lastReleaseDate})`;
             if (s.type === 'outdated')
                 return `Newer version available: ${s.latestVersion}`;
+            if (s.type === 'typosquat')
+                return `Possible typosquat of \`${s.suspectedTarget}\` (${s.reason})`;
         }).join('<br>');
         lines.push(`| \`${dep.name}\` | \`${dep.version}\` | ${EMOJI[dep.riskLevel]} ${dep.riskLevel} | ${details} |`);
     }
