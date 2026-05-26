@@ -51,6 +51,11 @@ export function renderTable(result) {
                 return `latest ${s.latestVersion}`;
             if (s.type === 'typosquat')
                 return `possible typosquat of ${s.suspectedTarget}`;
+            if (s.type === 'license') {
+                if (s.category === 'unknown')
+                    return 'license unknown';
+                return `${s.license} (${s.category})`;
+            }
         }).join('  ');
         const isClean = dep.riskLevel === 'none';
         const icon = LEVEL_ICON[dep.riskLevel];
