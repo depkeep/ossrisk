@@ -51,6 +51,7 @@ async function run(): Promise<void> {
     noOutdated:  getInput('no-outdated') === 'true',
     noTyposquat: getInput('no-typosquat') === 'true',
     noLicense:   getInput('no-license') === 'true',
+    directOnly:  getInput('direct-only') === 'true',
   };
 
   try {

@@ -41,6 +41,7 @@ async function run() {
         noOutdated: getInput('no-outdated') === 'true',
         noTyposquat: getInput('no-typosquat') === 'true',
         noLicense: getInput('no-license') === 'true',
+        directOnly: getInput('direct-only') === 'true',
     };
     try {
         const result = await scan(opts);

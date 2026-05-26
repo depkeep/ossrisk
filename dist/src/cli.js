@@ -39,6 +39,7 @@ program
     .option('--no-outdated', 'Skip latest-version checks')
     .option('--no-typosquat', 'Skip typosquatting checks')
     .option('--no-license', 'Skip license compliance checks')
+    .option('--direct-only', 'Scan only direct dependencies, skip transitives')
     .action(async (pathArg, options) => {
     const opts = {
         path: resolve(pathArg),
@@ -51,6 +52,7 @@ program
         noOutdated: !options.outdated,
         noTyposquat: !options.typosquat,
         noLicense: !options.license,
+        directOnly: !!options.directOnly,
     };
     try {
         if (opts.format === 'table') {

@@ -71,4 +71,46 @@ describe('parsePython', () => {
     const deps = await parsePython(dir);
     expect(deps[0].ecosystem).toBe('pypi');
   });
+
+  it('parses Pipfile.lock when present and prefers it over requirements.txt', async () => {
+    await writeFile(join(dir, 'requirements.txt'), 'flask==2.0.0\n');
+    await writeFile(join(dir, 'Pipfile.lock'), JSON.stringify({
+      _meta: { pipfile: { packages: { requests: '*' } } },
+      default: {
+        requests: { version: '==2.31.0' },
+        urllib3:  { version: '==2.0.7' },
+      },
+    }));
+    const deps = await parsePython(dir);
+    const names = deps.map(d => d.name).sort();
+    expect(names).toEqual(['requests', 'urllib3']);
+    expect(names).not.toContain('flask');
+  });
+
+  it('marks Pipfile.lock entries as direct vs transitive using _meta.pipfile.packages', async () => {
+    await writeFile(join(dir, 'Pipfile.lock'), JSON.stringify({
+      _meta: { pipfile: { packages: { requests: '*' } } },
+      default: {
+        requests: { version: '==2.31.0' },
+        urllib3:  { version: '==2.0.7' },
+      },
+    }));
+    const deps = await parsePython(dir);
+    expect(deps.find(d => d.name === 'requests')?.isDirect).toBe(true);
+    expect(deps.find(d => d.name === 'urllib3')?.isDirect).toBe(false);
+  });
+
+  it('falls back to marking everything direct when Pipfile section is missing', async () => {
+    await writeFile(join(dir, 'Pipfile.lock'), JSON.stringify({
+      default: { requests: { version: '==2.31.0' }, urllib3: { version: '==2.0.7' } },
+    }));
+    const deps = await parsePython(dir);
+    expect(deps.every(d => d.isDirect)).toBe(true);
+  });
+
+  it('marks requirements.txt entries as direct', async () => {
+    await writeFile(join(dir, 'requirements.txt'), 'requests==2.31.0\n');
+    const deps = await parsePython(dir);
+    expect(deps[0].isDirect).toBe(true);
+  });
 });

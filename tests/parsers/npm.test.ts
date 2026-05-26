@@ -91,4 +91,39 @@ describe('parseNpm', () => {
     const deps = await parseNpm(dir);
     expect(deps[0].ecosystem).toBe('npm');
   });
+
+  it('marks root-listed packages as direct in the lockfile', async () => {
+    await writeFile(join(dir, 'package-lock.json'), JSON.stringify({
+      packages: {
+        '': { dependencies: { express: '^4.18.2' } },
+        'node_modules/express': { version: '4.18.2', dependencies: { accepts: '^1.3.8' } },
+        'node_modules/accepts': { version: '1.3.8' },
+      },
+    }));
+    const deps = await parseNpm(dir);
+    expect(deps.find(d => d.name === 'express')?.isDirect).toBe(true);
+    expect(deps.find(d => d.name === 'accepts')?.isDirect).toBe(false);
+  });
+
+  it('resolves via to the direct dep that pulls in a transitive', async () => {
+    await writeFile(join(dir, 'package-lock.json'), JSON.stringify({
+      packages: {
+        '': { dependencies: { express: '^4.18.2' } },
+        'node_modules/express': { version: '4.18.2', dependencies: { accepts: '^1.3.8' } },
+        'node_modules/accepts': { version: '1.3.8', dependencies: { mime: '^1.6.0' } },
+        'node_modules/mime': { version: '1.6.0' },
+      },
+    }));
+    const deps = await parseNpm(dir);
+    expect(deps.find(d => d.name === 'mime')?.via).toBe('express');
+    expect(deps.find(d => d.name === 'accepts')?.via).toBe('express');
+  });
+
+  it('package.json-only fallback marks everything as direct', async () => {
+    await writeFile(join(dir, 'package.json'), JSON.stringify({
+      dependencies: { express: '^4.18.2' },
+    }));
+    const deps = await parseNpm(dir);
+    expect(deps.every(d => d.isDirect)).toBe(true);
+  });
 });

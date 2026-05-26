@@ -6,6 +6,11 @@ export interface Dependency {
   name: string;
   version: string;
   ecosystem: Ecosystem;
+  isDirect: boolean;
+  // Name of a top-level (direct) dependency through which this transitive
+  // is pulled in. Undefined for direct deps and for transitives whose path
+  // back to a direct dep can't be resolved from the available metadata.
+  via?: string;
 }
 
 export interface CveSignal {
@@ -72,6 +77,8 @@ export interface DependencyResult {
   ecosystem: Ecosystem;
   riskLevel: RiskLevel;
   signals: RiskSignal[];
+  isDirect: boolean;
+  via?: string;
 }
 
 export interface ScanSummary {
@@ -101,4 +108,5 @@ export interface ScanOptions {
   noOutdated: boolean;
   noTyposquat: boolean;
   noLicense: boolean;
+  directOnly: boolean;
 }

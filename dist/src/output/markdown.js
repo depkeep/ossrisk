@@ -24,8 +24,8 @@ export function renderMarkdown(result) {
         lines.push('✅ All dependencies are healthy.');
         return lines.join('\n');
     }
-    lines.push('| Package | Version | Risk | Details |');
-    lines.push('|---------|---------|------|---------|');
+    lines.push('| Package | Version | Risk | Path | Details |');
+    lines.push('|---------|---------|------|------|---------|');
     for (const dep of risky) {
         const details = dep.signals.map(s => {
             if (s.type === 'cve') {
@@ -47,7 +47,10 @@ export function renderMarkdown(result) {
                 return `License \`${s.license}\` (${s.category}) — review for commercial use`;
             }
         }).join('<br>');
-        lines.push(`| \`${dep.name}\` | \`${dep.version}\` | ${EMOJI[dep.riskLevel]} ${dep.riskLevel} | ${details} |`);
+        const path = dep.isDirect
+            ? 'direct'
+            : dep.via ? `via \`${dep.via}\`` : 'transitive';
+        lines.push(`| \`${dep.name}\` | \`${dep.version}\` | ${EMOJI[dep.riskLevel]} ${dep.riskLevel} | ${path} | ${details} |`);
     }
     return lines.join('\n');
 }

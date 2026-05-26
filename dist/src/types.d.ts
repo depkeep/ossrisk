@@ -4,6 +4,8 @@ export interface Dependency {
     name: string;
     version: string;
     ecosystem: Ecosystem;
+    isDirect: boolean;
+    via?: string;
 }
 export interface CveSignal {
     type: 'cve';
@@ -49,6 +51,8 @@ export interface DependencyResult {
     ecosystem: Ecosystem;
     riskLevel: RiskLevel;
     signals: RiskSignal[];
+    isDirect: boolean;
+    via?: string;
 }
 export interface ScanSummary {
     total: number;
@@ -75,5 +79,6 @@ export interface ScanOptions {
     noOutdated: boolean;
     noTyposquat: boolean;
     noLicense: boolean;
+    directOnly: boolean;
 }
 //# sourceMappingURL=types.d.ts.map
