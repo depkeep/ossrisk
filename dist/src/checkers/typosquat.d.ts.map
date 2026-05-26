@@ -1,1 +1,1 @@
-{"version":3,"file":"typosquat.d.ts","sourceRoot":"","sources":["../../../src/checkers/typosquat.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,eAAe,EAAE,MAAM,aAAa,CAAC;AA+F/D,wBAAgB,cAAc,CAAC,GAAG,EAAE,UAAU,GAAG,eAAe,EAAE,CA0BjE"}
+{"version":3,"file":"typosquat.d.ts","sourceRoot":"","sources":["../../../src/checkers/typosquat.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,eAAe,EAAE,MAAM,aAAa,CAAC;AAqG/D,wBAAgB,cAAc,CAAC,GAAG,EAAE,UAAU,GAAG,eAAe,EAAE,CA0BjE"}

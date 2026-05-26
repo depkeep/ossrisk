@@ -16,7 +16,11 @@ const HOMOGLYPH_PAIRS = [
     ['cl', 'd'],
     ['d', 'cl'],
 ];
-function levenshtein(a, b) {
+// Damerau-Levenshtein distance: like Levenshtein, but counts a swap of two
+// adjacent characters (e.g. `lodahs` ↔ `lodash`) as a single edit. Adjacent
+// transpositions are the most common kind of human typo, so this metric is
+// substantially more accurate than plain Levenshtein for typosquat detection.
+function damerauLevenshtein(a, b) {
     if (a === b)
         return 0;
     const m = a.length;
@@ -25,17 +29,24 @@ function levenshtein(a, b) {
         return n;
     if (n === 0)
         return m;
-    let prev = Array.from({ length: n + 1 }, (_, i) => i);
-    const curr = new Array(n + 1);
+    const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++)
+        d[i][0] = i;
+    for (let j = 0; j <= n; j++)
+        d[0][j] = j;
     for (let i = 1; i <= m; i++) {
-        curr[0] = i;
         for (let j = 1; j <= n; j++) {
             const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+            d[i][j] = Math.min(d[i - 1][j] + 1, // deletion
+            d[i][j - 1] + 1, // insertion
+            d[i - 1][j - 1] + cost // substitution
+            );
+            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); // transposition
+            }
         }
-        prev = curr.slice();
     }
-    return prev[n];
+    return d[m][n];
 }
 function isHomoglyphOf(suspect, target) {
     for (const [from, to] of HOMOGLYPH_PAIRS) {
@@ -67,7 +78,7 @@ function findMatch(name, targets) {
         if (isHomoglyphOf(candidate, tBase)) {
             return { target, reason: 'homoglyph', distance: 0 };
         }
-        const d = levenshtein(candidate, tBase);
+        const d = damerauLevenshtein(candidate, tBase);
         if (d > 0 && d <= MAX_DISTANCE) {
             return { target, reason: 'edit-distance', distance: d };
         }
