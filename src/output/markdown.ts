@@ -46,6 +46,10 @@ export function renderMarkdown(result: ScanResult): string {
       if (s.type === 'stale')     return `Last release ${s.monthsSince} months ago (${s.lastReleaseDate})`;
       if (s.type === 'outdated')  return `Newer version available: ${s.latestVersion}`;
       if (s.type === 'typosquat') return `Possible typosquat of \`${s.suspectedTarget}\` (${s.reason})`;
+      if (s.type === 'license') {
+        if (s.category === 'unknown') return 'License could not be determined';
+        return `License \`${s.license}\` (${s.category}) — review for commercial use`;
+      }
     }).join('<br>');
 
     lines.push(

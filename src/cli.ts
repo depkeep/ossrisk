@@ -44,6 +44,7 @@ program
   .option('--no-activity',       'Skip abandonment/staleness checks')
   .option('--no-outdated',       'Skip latest-version checks')
   .option('--no-typosquat',      'Skip typosquatting checks')
+  .option('--no-license',        'Skip license compliance checks')
   .action(async (pathArg: string, options) => {
     const opts: ScanOptions = {
       path:        resolve(pathArg),
@@ -55,6 +56,7 @@ program
       noActivity:  !options.activity,
       noOutdated:  !options.outdated,
       noTyposquat: !options.typosquat,
+      noLicense:   !options.license,
     };
 
     try {

@@ -35,6 +35,10 @@ inputs:
     description: 'Skip typosquatting checks'
     required: false
     default: 'false'
+  no-license:
+    description: 'Skip license compliance checks'
+    required: false
+    default: 'false'
   github-token:
     description: 'GitHub token for posting a PR comment with the report'
     required: false

@@ -40,6 +40,7 @@ async function run() {
         noActivity: getInput('no-activity') === 'true',
         noOutdated: getInput('no-outdated') === 'true',
         noTyposquat: getInput('no-typosquat') === 'true',
+        noLicense: getInput('no-license') === 'true',
     };
     try {
         const result = await scan(opts);

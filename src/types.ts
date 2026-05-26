@@ -45,13 +45,26 @@ export interface TyposquatSignal {
   distance: number;
 }
 
+export type LicenseCategory =
+  | 'permissive'
+  | 'weak-copyleft'
+  | 'strong-copyleft'
+  | 'unknown';
+
+export interface LicenseSignal {
+  type: 'license';
+  license: string;
+  category: Exclude<LicenseCategory, 'permissive'>;
+}
+
 export type RiskSignal =
   | CveSignal
   | EolSignal
   | AbandonedSignal
   | StaleSignal
   | OutdatedSignal
-  | TyposquatSignal;
+  | TyposquatSignal
+  | LicenseSignal;
 
 export interface DependencyResult {
   name: string;
@@ -87,4 +100,5 @@ export interface ScanOptions {
   noActivity: boolean;
   noOutdated: boolean;
   noTyposquat: boolean;
+  noLicense: boolean;
 }

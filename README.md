@@ -1,6 +1,6 @@
 # ossrisk
 
-Scan your dependencies for long-term viability and supply-chain risk: **EOL versions**, **known CVEs**, **abandonment signals**, and **typosquatting**.
+Scan your dependencies for long-term viability and supply-chain risk: **EOL versions**, **known CVEs**, **abandonment signals**, **typosquatting**, and **license compliance**.
 
 Supports `package.json` (npm) and `requirements.txt` (PyPI).
 
@@ -41,6 +41,7 @@ ossrisk [path] [options]
 | `--no-activity` | | Skip abandonment/staleness checks |
 | `--no-outdated` | | Skip latest-version checks |
 | `--no-typosquat` | | Skip typosquatting checks |
+| `--no-license` | | Skip license compliance checks |
 
 ### Examples
 
@@ -69,9 +70,23 @@ ossrisk . --no-cve --format markdown
 |---|---|
 | `critical` | CVE with CVSS ≥ 9.0 |
 | `high` | CVE with CVSS 7.0–8.9, EOL version, or suspected typosquat of a popular package |
-| `medium` | CVE with CVSS 4.0–6.9, or no release in 24+ months (abandoned) |
-| `low` | CVE with CVSS < 4.0, no release in 12–24 months (stale), or newer version available |
+| `medium` | CVE with CVSS 4.0–6.9, no release in 24+ months (abandoned), or strong-copyleft license (GPL/AGPL/SSPL/…) |
+| `low` | CVE with CVSS < 4.0, no release in 12–24 months (stale), newer version available, weak-copyleft license (LGPL/MPL/EPL/…), or unknown license |
 | `none` | No issues found |
+
+### Licenses
+
+ossrisk reads each package's declared license from the npm or PyPI registry,
+normalizes common variants to SPDX identifiers, and categorizes them:
+
+- **permissive** (MIT, Apache-2.0, BSD, ISC, …) — not flagged
+- **weak-copyleft** (LGPL, MPL, EPL, CDDL, …) — flagged as `low`
+- **strong-copyleft** (GPL, AGPL, SSPL, OSL, EUPL) — flagged as `medium`
+- **unknown** (missing, `UNKNOWN`, or unrecognizable text) — flagged as `low`
+
+The check exists to surface licenses that need legal review before commercial
+use; it is not a judgement that any of these licenses are bad. Use
+`--no-license` if your project doesn't need this signal.
 
 ### Typosquatting
 
@@ -107,6 +122,7 @@ When `github-token` is provided and the workflow runs on a pull request, ossrisk
 | `no-activity` | `false` | Skip abandonment/staleness checks |
 | `no-outdated` | `false` | Skip latest-version checks |
 | `no-typosquat` | `false` | Skip typosquatting checks |
+| `no-license` | `false` | Skip license compliance checks |
 | `github-token` | | GitHub token for posting a PR comment |
 
 ### Action outputs
@@ -132,6 +148,7 @@ const result = await scan({
   noActivity: false,
   noOutdated: false,
   noTyposquat: false,
+  noLicense: false,
 });
 
 console.log(result.summary);
@@ -147,6 +164,7 @@ console.log(result.summary);
 - **Activity** — npm registry / PyPI JSON API
 - **Latest versions** — npm registry / PyPI JSON API
 - **Typosquatting** — local curated list of popular npm & PyPI packages (no API calls)
+- **Licenses** — `license` field from npm registry; `info.classifiers` and `info.license` from PyPI
 
 All checks are read-only and require no API keys.
 

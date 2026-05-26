@@ -36,7 +36,13 @@ export interface TyposquatSignal {
     reason: 'edit-distance' | 'homoglyph';
     distance: number;
 }
-export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal;
+export type LicenseCategory = 'permissive' | 'weak-copyleft' | 'strong-copyleft' | 'unknown';
+export interface LicenseSignal {
+    type: 'license';
+    license: string;
+    category: Exclude<LicenseCategory, 'permissive'>;
+}
+export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal | LicenseSignal;
 export interface DependencyResult {
     name: string;
     version: string;
@@ -68,5 +74,6 @@ export interface ScanOptions {
     noActivity: boolean;
     noOutdated: boolean;
     noTyposquat: boolean;
+    noLicense: boolean;
 }
 //# sourceMappingURL=types.d.ts.map

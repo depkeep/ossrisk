@@ -50,6 +50,7 @@ async function run(): Promise<void> {
     noActivity:  getInput('no-activity') === 'true',
     noOutdated:  getInput('no-outdated') === 'true',
     noTyposquat: getInput('no-typosquat') === 'true',
+    noLicense:   getInput('no-license') === 'true',
   };
 
   try {

@@ -5,6 +5,7 @@ import { checkActivity } from './checkers/activity.js';
 import { checkEol } from './checkers/eol.js';
 import { checkOutdated } from './checkers/outdated.js';
 import { checkTyposquat } from './checkers/typosquat.js';
+import { checkLicense } from './checkers/license.js';
 import { parseNpm } from './parsers/npm.js';
 import { parsePython } from './parsers/python.js';
 const RISK_ORDER = ['none', 'low', 'medium', 'high', 'critical'];
@@ -13,6 +14,7 @@ function signalRisk(s) {
         case 'cve': return s.severity;
         case 'eol': return 'high';
         case 'typosquat': return 'high';
+        case 'license': return s.category === 'strong-copyleft' ? 'medium' : 'low';
         case 'abandoned': return 'medium';
         case 'stale': return 'low';
         case 'outdated': return 'low';
@@ -51,6 +53,7 @@ export async function scan(opts) {
                 ...(!opts.noEol ? await checkEol(dep) : []),
                 ...(!opts.noActivity ? await checkActivity(dep) : []),
                 ...(!opts.noOutdated ? await checkOutdated(dep) : []),
+                ...(!opts.noLicense ? await checkLicense(dep) : []),
                 ...(!opts.noTyposquat ? checkTyposquat(dep) : []),
             ];
             return {
