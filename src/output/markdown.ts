@@ -33,8 +33,8 @@ export function renderMarkdown(result: ScanResult): string {
     return lines.join('\n');
   }
 
-  lines.push('| Package | Version | Risk | Details |');
-  lines.push('|---------|---------|------|---------|');
+  lines.push('| Package | Version | Risk | Path | Details |');
+  lines.push('|---------|---------|------|------|---------|');
 
   for (const dep of risky) {
     const details = dep.signals.map(s => {
@@ -52,8 +52,12 @@ export function renderMarkdown(result: ScanResult): string {
       }
     }).join('<br>');
 
+    const path = dep.isDirect
+      ? 'direct'
+      : dep.via ? `via \`${dep.via}\`` : 'transitive';
+
     lines.push(
-      `| \`${dep.name}\` | \`${dep.version}\` | ${EMOJI[dep.riskLevel]} ${dep.riskLevel} | ${details} |`
+      `| \`${dep.name}\` | \`${dep.version}\` | ${EMOJI[dep.riskLevel]} ${dep.riskLevel} | ${path} | ${details} |`
     );
   }
 

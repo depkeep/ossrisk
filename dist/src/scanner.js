@@ -31,14 +31,20 @@ async function detectAndParse(dir) {
         const deps = await parseNpm(dir);
         return { deps, manifest: join(dir, 'package.json') };
     }
+    if (existsSync(join(dir, 'Pipfile.lock'))) {
+        const deps = await parsePython(dir);
+        return { deps, manifest: join(dir, 'Pipfile.lock') };
+    }
     if (existsSync(join(dir, 'requirements.txt'))) {
         const deps = await parsePython(dir);
         return { deps, manifest: join(dir, 'requirements.txt') };
     }
-    throw new Error('No supported manifest found. Supported: package.json, requirements.txt');
+    throw new Error('No supported manifest found. Supported: package.json, Pipfile.lock, requirements.txt');
 }
 export async function scan(opts) {
-    const { deps, manifest } = await detectAndParse(opts.path);
+    const all = await detectAndParse(opts.path);
+    const manifest = all.manifest;
+    const deps = opts.directOnly ? all.deps.filter(d => d.isDirect) : all.deps;
     // CVEs: one batched API call for all deps
     const cveMap = opts.noCve
         ? new Map()
@@ -62,6 +68,8 @@ export async function scan(opts) {
                 ecosystem: dep.ecosystem,
                 riskLevel: maxRisk(signals),
                 signals,
+                isDirect: dep.isDirect,
+                via: dep.via,
             };
         }));
         results.push(...batchResults);

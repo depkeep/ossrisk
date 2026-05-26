@@ -2,7 +2,7 @@
 
 Scan your dependencies for long-term viability and supply-chain risk: **EOL versions**, **known CVEs**, **abandonment signals**, **typosquatting**, and **license compliance**.
 
-Supports `package.json` (npm) and `requirements.txt` (PyPI).
+Supports `package.json` / `package-lock.json` (npm) and `requirements.txt` / `Pipfile.lock` (PyPI). When a lockfile is present, the full resolved tree (direct + transitive) is scanned and each flagged transitive shows the direct dep it came in through.
 
 [![CI](https://github.com/depkeep/ossrisk/actions/workflows/ci.yml/badge.svg)](https://github.com/depkeep/ossrisk/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/ossrisk)](https://www.npmjs.com/package/ossrisk)
@@ -42,6 +42,7 @@ ossrisk [path] [options]
 | `--no-outdated` | | Skip latest-version checks |
 | `--no-typosquat` | | Skip typosquatting checks |
 | `--no-license` | | Skip license compliance checks |
+| `--direct-only` | | Scan only direct dependencies, skip transitives |
 
 ### Examples
 
@@ -88,6 +89,22 @@ The check exists to surface licenses that need legal review before commercial
 use; it is not a judgement that any of these licenses are bad. Use
 `--no-license` if your project doesn't need this signal.
 
+### Transitive dependencies
+
+ossrisk scans the full resolved dependency tree when a lockfile is present:
+
+- **npm**: `package-lock.json` (lockfileVersion 2+) — every package listed is scanned;
+  dev-only deps are excluded.
+- **PyPI**: `Pipfile.lock` — `default` group is scanned; if the lockfile preserves
+  `_meta.pipfile.packages`, entries are tagged as direct or transitive accordingly.
+
+For flagged transitives, the report shows the direct dependency that pulls them in
+(`via express`), so you know which top-level package to update or replace. Use
+`--direct-only` to skip transitives entirely.
+
+Without a lockfile (e.g. only `package.json` or only `requirements.txt`), ossrisk
+falls back to direct-only scanning.
+
 ### Typosquatting
 
 ossrisk compares each dependency name against a curated list of popular npm and PyPI
@@ -123,6 +140,7 @@ When `github-token` is provided and the workflow runs on a pull request, ossrisk
 | `no-outdated` | `false` | Skip latest-version checks |
 | `no-typosquat` | `false` | Skip typosquatting checks |
 | `no-license` | `false` | Skip license compliance checks |
+| `direct-only` | `false` | Scan only direct dependencies, skip transitives |
 | `github-token` | | GitHub token for posting a PR comment |
 
 ### Action outputs
@@ -149,6 +167,7 @@ const result = await scan({
   noOutdated: false,
   noTyposquat: false,
   noLicense: false,
+  directOnly: false,
 });
 
 console.log(result.summary);

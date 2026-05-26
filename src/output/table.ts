@@ -65,6 +65,7 @@ export function renderTable(result: ScanResult): string {
     const isClean = dep.riskLevel === 'none';
     const icon    = LEVEL_ICON[dep.riskLevel];
     const name    = pad(dep.name, nameW - 2);
+    const viaSuffix = !dep.isDirect && dep.via ? `  via ${dep.via}` : '';
 
     lines.push(
       isClean
@@ -72,7 +73,7 @@ export function renderTable(result: ScanResult): string {
         : `  ${col(`${icon} ${name}`, dep.riskLevel)}  ` +
           `${dep.version.padEnd(12)}  ` +
           `${col(dep.riskLevel.padEnd(9), dep.riskLevel)}  ` +
-          `${C.dim}${details}${C.reset}`
+          `${C.dim}${details}${viaSuffix}${C.reset}`
     );
   }
 

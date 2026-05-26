@@ -1,6 +1,6 @@
 {
   "name": "ossrisk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Scan dependencies for supply-chain risk: EOL versions, CVEs, abandonment, typosquatting, and license compliance",
   "type": "module",
   "bin": {
