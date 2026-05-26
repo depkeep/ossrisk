@@ -37,6 +37,7 @@ program
     .option('--no-cve', 'Skip CVE checks')
     .option('--no-activity', 'Skip abandonment/staleness checks')
     .option('--no-outdated', 'Skip latest-version checks')
+    .option('--no-typosquat', 'Skip typosquatting checks')
     .action(async (pathArg, options) => {
     const opts = {
         path: resolve(pathArg),
@@ -47,6 +48,7 @@ program
         noCve: !options.cve,
         noActivity: !options.activity,
         noOutdated: !options.outdated,
+        noTyposquat: !options.typosquat,
     };
     try {
         if (opts.format === 'table') {

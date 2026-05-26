@@ -31,6 +31,10 @@ inputs:
     description: 'Skip latest-version checks'
     required: false
     default: 'false'
+  no-typosquat:
+    description: 'Skip typosquatting checks'
+    required: false
+    default: 'false'
   github-token:
     description: 'GitHub token for posting a PR comment with the report'
     required: false

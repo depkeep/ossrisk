@@ -1,6 +1,6 @@
 # ossrisk
 
-Scan your dependencies for long-term viability risk: **EOL versions**, **known CVEs**, and **abandonment signals**.
+Scan your dependencies for long-term viability and supply-chain risk: **EOL versions**, **known CVEs**, **abandonment signals**, and **typosquatting**.
 
 Supports `package.json` (npm) and `requirements.txt` (PyPI).
 
@@ -40,6 +40,7 @@ ossrisk [path] [options]
 | `--no-cve` | | Skip CVE checks |
 | `--no-activity` | | Skip abandonment/staleness checks |
 | `--no-outdated` | | Skip latest-version checks |
+| `--no-typosquat` | | Skip typosquatting checks |
 
 ### Examples
 
@@ -67,10 +68,17 @@ ossrisk . --no-cve --format markdown
 | Level | Triggers |
 |---|---|
 | `critical` | CVE with CVSS ≥ 9.0 |
-| `high` | CVE with CVSS 7.0–8.9, or EOL version |
+| `high` | CVE with CVSS 7.0–8.9, EOL version, or suspected typosquat of a popular package |
 | `medium` | CVE with CVSS 4.0–6.9, or no release in 24+ months (abandoned) |
 | `low` | CVE with CVSS < 4.0, no release in 12–24 months (stale), or newer version available |
 | `none` | No issues found |
+
+### Typosquatting
+
+ossrisk compares each dependency name against a curated list of popular npm and PyPI
+packages, flagging anything within edit distance 2 or matching common homoglyph
+substitutions (e.g. `rn` ↔ `m`, `1` ↔ `l`). A scoped package like `@vendor/lodash`
+is compared by its basename. The check is purely local — no API calls.
 
 ---
 
@@ -98,6 +106,7 @@ When `github-token` is provided and the workflow runs on a pull request, ossrisk
 | `no-cve` | `false` | Skip CVE checks |
 | `no-activity` | `false` | Skip abandonment/staleness checks |
 | `no-outdated` | `false` | Skip latest-version checks |
+| `no-typosquat` | `false` | Skip typosquatting checks |
 | `github-token` | | GitHub token for posting a PR comment |
 
 ### Action outputs
@@ -122,6 +131,7 @@ const result = await scan({
   noCve: false,
   noActivity: false,
   noOutdated: false,
+  noTyposquat: false,
 });
 
 console.log(result.summary);
@@ -136,6 +146,7 @@ console.log(result.summary);
 - **EOL dates** — [endoflife.date](https://endoflife.date) API
 - **Activity** — npm registry / PyPI JSON API
 - **Latest versions** — npm registry / PyPI JSON API
+- **Typosquatting** — local curated list of popular npm & PyPI packages (no API calls)
 
 All checks are read-only and require no API keys.
 

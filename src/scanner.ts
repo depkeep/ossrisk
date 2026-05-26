@@ -13,6 +13,7 @@ import { checkCvesBatch } from './checkers/osv.js';
 import { checkActivity } from './checkers/activity.js';
 import { checkEol } from './checkers/eol.js';
 import { checkOutdated } from './checkers/outdated.js';
+import { checkTyposquat } from './checkers/typosquat.js';
 import { parseNpm } from './parsers/npm.js';
 import { parsePython } from './parsers/python.js';
 
@@ -22,6 +23,7 @@ function signalRisk(s: RiskSignal): RiskLevel {
   switch (s.type) {
     case 'cve':       return s.severity;
     case 'eol':       return 'high';
+    case 'typosquat': return 'high';
     case 'abandoned': return 'medium';
     case 'stale':     return 'low';
     case 'outdated':  return 'low';
@@ -66,9 +68,10 @@ export async function scan(opts: ScanOptions): Promise<ScanResult> {
       batch.map(async (dep): Promise<DependencyResult> => {
         const signals: RiskSignal[] = [
           ...(cveMap.get(`${dep.name}@${dep.version}`) ?? []),
-          ...(!opts.noEol      ? await checkEol(dep)       : []),
+          ...(!opts.noEol       ? await checkEol(dep)       : []),
           ...(!opts.noActivity  ? await checkActivity(dep)  : []),
           ...(!opts.noOutdated  ? await checkOutdated(dep)  : []),
+          ...(!opts.noTyposquat ? checkTyposquat(dep)       : []),
         ];
         return {
           name: dep.name,

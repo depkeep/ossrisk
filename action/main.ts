@@ -49,6 +49,7 @@ async function run(): Promise<void> {
     noCve:       getInput('no-cve') === 'true',
     noActivity:  getInput('no-activity') === 'true',
     noOutdated:  getInput('no-outdated') === 'true',
+    noTyposquat: getInput('no-typosquat') === 'true',
   };
 
   try {

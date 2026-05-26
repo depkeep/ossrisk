@@ -1,7 +1,7 @@
 {
   "name": "ossrisk",
-  "version": "0.1.0",
-  "description": "Scan dependencies for long-term viability risk: EOL versions, CVEs, and abandonment signals",
+  "version": "0.2.0",
+  "description": "Scan dependencies for long-term viability risk: EOL versions, CVEs, abandonment signals, and typosquatting",
   "type": "module",
   "bin": {
     "ossrisk": "./dist/src/cli.js"

@@ -39,6 +39,7 @@ async function run() {
         noCve: getInput('no-cve') === 'true',
         noActivity: getInput('no-activity') === 'true',
         noOutdated: getInput('no-outdated') === 'true',
+        noTyposquat: getInput('no-typosquat') === 'true',
     };
     try {
         const result = await scan(opts);
