@@ -22,7 +22,13 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Publish to npm
-        run: npm publish
+        # Provenance uses the GitHub OIDC token (id-token: write above) to
+        # produce an npm attestation. If trusted publishing is configured on
+        # npmjs.com for this package, no NODE_AUTH_TOKEN is needed; if it
+        # isn't yet, npm falls back to the token below.
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
