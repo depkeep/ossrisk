@@ -44,7 +44,12 @@ export interface LicenseSignal {
     license: string;
     category: Exclude<LicenseCategory, 'permissive'>;
 }
-export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal | LicenseSignal;
+export interface MaintainerSignal {
+    type: 'maintainer';
+    pattern: 'new-publisher' | 'sole-maintainer';
+    detail: string;
+}
+export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal | LicenseSignal | MaintainerSignal;
 export interface DependencyResult {
     name: string;
     version: string;
@@ -79,6 +84,7 @@ export interface ScanOptions {
     noOutdated: boolean;
     noTyposquat: boolean;
     noLicense: boolean;
+    noMaintainer: boolean;
     directOnly: boolean;
 }
 //# sourceMappingURL=types.d.ts.map

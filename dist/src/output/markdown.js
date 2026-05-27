@@ -46,6 +46,10 @@ export function renderMarkdown(result) {
                     return 'License could not be determined';
                 return `License \`${s.license}\` (${s.category}) — review for commercial use`;
             }
+            if (s.type === 'maintainer') {
+                const heading = s.pattern === 'new-publisher' ? 'New publisher' : 'Sole maintainer';
+                return `${heading}: ${s.detail}`;
+            }
         }).join('<br>');
         const path = dep.isDirect
             ? 'direct'

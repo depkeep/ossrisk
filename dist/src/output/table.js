@@ -56,6 +56,9 @@ export function renderTable(result) {
                     return 'license unknown';
                 return `${s.license} (${s.category})`;
             }
+            if (s.type === 'maintainer') {
+                return s.pattern === 'new-publisher' ? 'new publisher' : 'sole maintainer';
+            }
         }).join('  ');
         const isClean = dep.riskLevel === 'none';
         const icon = LEVEL_ICON[dep.riskLevel];

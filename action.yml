@@ -39,6 +39,10 @@ inputs:
     description: 'Skip license compliance checks'
     required: false
     default: 'false'
+  no-maintainer:
+    description: 'Skip maintainer/publisher checks'
+    required: false
+    default: 'false'
   direct-only:
     description: 'Scan only direct dependencies, skip transitives'
     required: false

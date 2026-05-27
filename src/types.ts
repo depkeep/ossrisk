@@ -62,6 +62,12 @@ export interface LicenseSignal {
   category: Exclude<LicenseCategory, 'permissive'>;
 }
 
+export interface MaintainerSignal {
+  type: 'maintainer';
+  pattern: 'new-publisher' | 'sole-maintainer';
+  detail: string;
+}
+
 export type RiskSignal =
   | CveSignal
   | EolSignal
@@ -69,7 +75,8 @@ export type RiskSignal =
   | StaleSignal
   | OutdatedSignal
   | TyposquatSignal
-  | LicenseSignal;
+  | LicenseSignal
+  | MaintainerSignal;
 
 export interface DependencyResult {
   name: string;
@@ -108,5 +115,6 @@ export interface ScanOptions {
   noOutdated: boolean;
   noTyposquat: boolean;
   noLicense: boolean;
+  noMaintainer: boolean;
   directOnly: boolean;
 }
