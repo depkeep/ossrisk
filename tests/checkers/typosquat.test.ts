@@ -59,11 +59,31 @@ describe('checkTyposquat', () => {
     expect(checkTyposquat(pypi('numpy'))).toEqual([]);
   });
 
-  it('handles scoped npm names by comparing the basename', () => {
-    // @evil/lodash basename matches lodash exactly → not a typosquat
+  it('does not flag scoped npm packages against unscoped popular targets', () => {
+    // npm scopes have verified ownership, so basename-vs-unscoped comparison
+    // is the wrong signal. Scope-confusion attacks (@bable/lodash) need
+    // per-scope reputation data we don't have. See checkTyposquat for detail.
     expect(checkTyposquat(npm('@evil/lodash'))).toEqual([]);
-    // @evil/lodahs basename matches lodash with edit distance 1
-    const signals = checkTyposquat(npm('@evil/lodahs'));
+    expect(checkTyposquat(npm('@evil/lodahs'))).toEqual([]);
+    expect(checkTyposquat(npm('@astrojs/prism'))).toEqual([]);
+    expect(checkTyposquat(npm('@babel/parser'))).toEqual([]);
+    expect(checkTyposquat(npm('@floating-ui/core'))).toEqual([]);
+    expect(checkTyposquat(npm('@types/hast'))).toEqual([]);
+  });
+
+  it('requires an exact distance-1 match for short names', () => {
+    // Distance 2 across 4-5 char names was producing many false positives
+    // (asap/tsup, jose/core, vfile/vite, regex/remix, defu/debug). Distance
+    // 1 typos at short lengths are still caught.
+    expect(checkTyposquat(npm('asap'))).toEqual([]);
+    expect(checkTyposquat(npm('clsx'))).toEqual([]);
+    expect(checkTyposquat(npm('vfile'))).toEqual([]);
+    expect(checkTyposquat(npm('regex'))).toEqual([]);
+    expect(checkTyposquat(npm('defu'))).toEqual([]);
+    expect(checkTyposquat(npm('nise'))).toEqual([]);
+    expect(checkTyposquat(npm('parse5'))).toEqual([]);
+    // But distance-1 short typos are still flagged
+    const signals = checkTyposquat(npm('lodsh'));
     expect(signals[0]?.suspectedTarget).toBe('lodash');
   });
 

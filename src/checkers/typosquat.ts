@@ -8,6 +8,11 @@ import {
 
 const MIN_NAME_LEN = 4;
 const MAX_DISTANCE = 2;
+// Below this length, require an exact distance-1 match. Distance 2 across
+// 4-5 char names means ~40-50% of characters differ — that's a different
+// word, not a typo (asap/tsup, jose/core, vfile/vite all sit in that band
+// as legitimately distinct packages).
+const SHORT_LEN_THRESHOLD = 7;
 
 // Homoglyph substitutions: each pair maps a sequence to a visually similar one.
 // When attackers substitute `rn` → `m` (e.g. `expmss` for `express`), edit
@@ -81,18 +86,21 @@ interface Match {
 }
 
 function findMatch(name: string, targets: readonly string[]): Match | null {
-  const candidate = basename(name);
-  if (candidate.length < MIN_NAME_LEN) return null;
+  if (name.length < MIN_NAME_LEN) return null;
 
   for (const target of targets) {
-    if (target === name || target === candidate) continue;
     const tBase = basename(target);
-    if (Math.abs(tBase.length - candidate.length) > MAX_DISTANCE) continue;
-    if (isHomoglyphOf(candidate, tBase)) {
+    if (tBase === name) continue;
+    if (Math.abs(tBase.length - name.length) > MAX_DISTANCE) continue;
+    if (isHomoglyphOf(name, tBase)) {
       return { target, reason: 'homoglyph', distance: 0 };
     }
-    const d = damerauLevenshtein(candidate, tBase);
-    if (d > 0 && d <= MAX_DISTANCE) {
+    const maxDist =
+      Math.min(name.length, tBase.length) < SHORT_LEN_THRESHOLD
+        ? 1
+        : MAX_DISTANCE;
+    const d = damerauLevenshtein(name, tBase);
+    if (d > 0 && d <= maxDist) {
       return { target, reason: 'edit-distance', distance: d };
     }
   }
@@ -113,8 +121,16 @@ export function checkTyposquat(dep: Dependency): TyposquatSignal[] {
     return [];
   }
 
+  // Scoped npm packages have verified scope ownership: @babel/parser is
+  // published by the babel team, not pretending to be `parcel`. Comparing
+  // scoped basenames against unscoped popular targets generates overwhelming
+  // false positives (@astrojs/prism↔prisma, @floating-ui/core↔ora, …) and
+  // detecting real scope-confusion attacks (@bable/lodash) needs per-scope
+  // reputation data we don't have — so opt out entirely for scoped names.
+  if (dep.name.startsWith('@')) return [];
+
   // If the package itself is in the popular list, it cannot be a typosquat.
-  if (popularSet.has(dep.name) || popularSet.has(basename(dep.name))) return [];
+  if (popularSet.has(dep.name)) return [];
 
   const match = findMatch(dep.name, popularList);
   if (!match) return [];

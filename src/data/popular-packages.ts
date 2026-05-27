@@ -6,7 +6,7 @@
 export const POPULAR_NPM: readonly string[] = [
   // Core utilities
   'lodash', 'underscore', 'ramda', 'moment', 'dayjs', 'date-fns', 'uuid',
-  'nanoid', 'shortid', 'chalk', 'colors', 'kleur', 'picocolors', 'debug',
+  'nanoid', 'shortid', 'chalk', 'colors', 'color', 'kleur', 'picocolors', 'debug',
   'minimist', 'yargs', 'commander', 'meow', 'inquirer', 'prompts', 'ora',
   'figlet', 'cli-progress', 'dotenv', 'cross-env', 'rimraf', 'mkdirp',
   'glob', 'globby', 'fast-glob', 'chokidar', 'fs-extra', 'graceful-fs',
@@ -17,9 +17,9 @@ export const POPULAR_NPM: readonly string[] = [
   'express', 'koa', 'fastify', 'hapi', 'nest', '@nestjs/core', 'next',
   'nuxt', 'remix', 'gatsby', 'astro', 'svelte', 'vue', 'react', 'react-dom',
   'react-native', 'preact', 'solid-js', 'angular', '@angular/core',
-  '@angular/common', 'ember-cli', 'meteor',
+  '@angular/common', 'ember-cli', 'meteor', 'react-dnd',
   // Build / tooling
-  'webpack', 'rollup', 'parcel', 'vite', 'esbuild', 'turbo', 'tsup', 'swc',
+  'webpack', 'rollup', 'parcel', 'vite', 'esbuild', 'turbo', 'tsup', 'swc', 'acorn',
   'babel-core', '@babel/core', '@babel/preset-env', '@babel/preset-react',
   'typescript', 'tsc', 'ts-node', 'tsx', 'tslib', 'postcss', 'autoprefixer',
   'tailwindcss', 'sass', 'less', 'stylus',
@@ -38,12 +38,12 @@ export const POPULAR_NPM: readonly string[] = [
   'mongoose', 'sequelize', 'prisma', 'typeorm', 'knex', 'pg', 'mysql',
   'mysql2', 'mongodb', 'redis', 'ioredis', 'mssql', 'sqlite3', 'better-sqlite3',
   // Auth / crypto
-  'jsonwebtoken', 'jws', 'jwks-rsa', 'passport', 'bcrypt', 'bcryptjs',
+  'jsonwebtoken', 'jws', 'jwks-rsa', 'jose', 'passport', 'bcrypt', 'bcryptjs',
   'argon2', 'crypto-js', 'node-forge', 'openid-client',
   // Validation / parsing
   'zod', 'yup', 'joi', 'ajv', 'class-validator', 'class-transformer',
   'cheerio', 'jsdom', 'xml2js', 'fast-xml-parser', 'csv-parse', 'csv-parser',
-  'papaparse', 'marked', 'markdown-it', 'remark', 'unified',
+  'papaparse', 'marked', 'markdown-it', 'remark', 'unified', 'prismjs',
   // Logging / monitoring
   'winston', 'pino', 'bunyan', 'log4js', 'loglevel', 'signale', '@sentry/node',
   '@sentry/browser',
