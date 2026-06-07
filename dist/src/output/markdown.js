@@ -50,6 +50,9 @@ export function renderMarkdown(result) {
                 const heading = s.pattern === 'new-publisher' ? 'New publisher' : 'Sole maintainer';
                 return `${heading}: ${s.detail}`;
             }
+            if (s.type === 'install-script') {
+                return `Has install lifecycle hooks: \`${s.hooks.join('\`, \`')}\``;
+            }
         }).join('<br>');
         const path = dep.isDirect
             ? 'direct'

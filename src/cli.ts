@@ -46,6 +46,7 @@ program
   .option('--no-typosquat',      'Skip typosquatting checks')
   .option('--no-license',        'Skip license compliance checks')
   .option('--no-maintainer',     'Skip maintainer/publisher checks')
+  .option('--no-install-script', 'Skip install-script (preinstall/postinstall) checks')
   .option('--direct-only',       'Scan only direct dependencies, skip transitives')
   .action(async (pathArg: string, options) => {
     const opts: ScanOptions = {
@@ -58,9 +59,10 @@ program
       noActivity:  !options.activity,
       noOutdated:  !options.outdated,
       noTyposquat: !options.typosquat,
-      noLicense:    !options.license,
-      noMaintainer: !options.maintainer,
-      directOnly:   !!options.directOnly,
+      noLicense:       !options.license,
+      noMaintainer:    !options.maintainer,
+      noInstallScript: !options.installScript,
+      directOnly:      !!options.directOnly,
     };
 
     try {

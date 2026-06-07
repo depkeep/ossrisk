@@ -49,7 +49,11 @@ export interface MaintainerSignal {
     pattern: 'new-publisher' | 'sole-maintainer';
     detail: string;
 }
-export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal | LicenseSignal | MaintainerSignal;
+export interface InstallScriptSignal {
+    type: 'install-script';
+    hooks: string[];
+}
+export type RiskSignal = CveSignal | EolSignal | AbandonedSignal | StaleSignal | OutdatedSignal | TyposquatSignal | LicenseSignal | MaintainerSignal | InstallScriptSignal;
 export interface DependencyResult {
     name: string;
     version: string;
@@ -85,6 +89,7 @@ export interface ScanOptions {
     noTyposquat: boolean;
     noLicense: boolean;
     noMaintainer: boolean;
+    noInstallScript: boolean;
     directOnly: boolean;
 }
 //# sourceMappingURL=types.d.ts.map

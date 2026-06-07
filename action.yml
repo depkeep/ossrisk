@@ -43,6 +43,10 @@ inputs:
     description: 'Skip maintainer/publisher checks'
     required: false
     default: 'false'
+  no-install-script:
+    description: 'Skip install-script (preinstall/postinstall) checks'
+    required: false
+    default: 'false'
   direct-only:
     description: 'Scan only direct dependencies, skip transitives'
     required: false

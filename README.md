@@ -43,6 +43,7 @@ ossrisk [path] [options]
 | `--no-typosquat` | | Skip typosquatting checks |
 | `--no-license` | | Skip license compliance checks |
 | `--no-maintainer` | | Skip maintainer/publisher checks |
+| `--no-install-script` | | Skip install-script (preinstall/postinstall) checks |
 | `--direct-only` | | Scan only direct dependencies, skip transitives |
 
 ### Examples
@@ -73,7 +74,7 @@ ossrisk . --no-cve --format markdown
 | `critical` | CVE with CVSS ≥ 9.0 |
 | `high` | CVE with CVSS 7.0–8.9, EOL version, or suspected typosquat of a popular package |
 | `medium` | CVE with CVSS 4.0–6.9, no release in 24+ months (abandoned), strong-copyleft license (GPL/AGPL/SSPL/…), or new-publisher pattern on a >180-day-old package |
-| `low` | CVE with CVSS < 4.0, no release in 12–24 months (stale), newer version available, weak-copyleft license (LGPL/MPL/EPL/…), unknown license, or sole maintainer |
+| `low` | CVE with CVSS < 4.0, no release in 12–24 months (stale), newer version available, weak-copyleft license (LGPL/MPL/EPL/…), unknown license, sole maintainer, or install lifecycle hooks (`preinstall`/`install`/`postinstall`) |
 | `none` | No issues found |
 
 ### Maintainer / publisher signals
@@ -84,6 +85,12 @@ Two patterns surfaced from npm packument metadata:
 - **sole-maintainer** (`low`) — only one maintainer is registered on the package. Informational bus-factor signal, not a vulnerability.
 
 Both checks are npm-only for now; PyPI's JSON API doesn't expose comparable per-version uploader history. Use `--no-maintainer` to skip these checks.
+
+### Install scripts
+
+npm packages can declare lifecycle hooks (`preinstall`, `install`, `postinstall`) that run automatically on `npm install`. These are a known supply-chain attack vector — several high-profile compromises (e.g. `event-stream`, `node-ipc`) used postinstall scripts to exfiltrate data or deliver payloads.
+
+ossrisk fetches the version-specific manifest from the npm registry and flags any package that declares one or more of these hooks as `low` risk. The signal is informational: many legitimate packages (native add-ons, build tools) use `node-gyp rebuild` as an install script. The intent is to surface the signal so you can consciously decide whether a package's install-time code execution is expected. Use `--no-install-script` to suppress this check.
 
 ### Licenses
 
@@ -151,6 +158,7 @@ When `github-token` is provided and the workflow runs on a pull request, ossrisk
 | `no-typosquat` | `false` | Skip typosquatting checks |
 | `no-license` | `false` | Skip license compliance checks |
 | `no-maintainer` | `false` | Skip maintainer/publisher checks |
+| `no-install-script` | `false` | Skip install-script (preinstall/postinstall) checks |
 | `direct-only` | `false` | Scan only direct dependencies, skip transitives |
 | `github-token` | | GitHub token for posting a PR comment |
 
@@ -179,6 +187,7 @@ const result = await scan({
   noTyposquat: false,
   noLicense: false,
   noMaintainer: false,
+  noInstallScript: false,
   directOnly: false,
 });
 
@@ -197,6 +206,7 @@ console.log(result.summary);
 - **Typosquatting** — local curated list of popular npm & PyPI packages (no API calls)
 - **Licenses** — `license` field from npm registry; `info.classifiers` and `info.license` from PyPI
 - **Maintainer signals** — `maintainers`, `versions[v]._npmUser`, and `time` from the npm registry (npm only)
+- **Install scripts** — `scripts` field from the version-specific npm registry manifest (npm only)
 
 All checks are read-only and require no API keys.
 

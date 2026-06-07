@@ -42,6 +42,7 @@ async function run() {
         noTyposquat: getInput('no-typosquat') === 'true',
         noLicense: getInput('no-license') === 'true',
         noMaintainer: getInput('no-maintainer') === 'true',
+        noInstallScript: getInput('no-install-script') === 'true',
         directOnly: getInput('direct-only') === 'true',
     };
     try {
