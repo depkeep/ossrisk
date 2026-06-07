@@ -68,6 +68,11 @@ export interface MaintainerSignal {
   detail: string;
 }
 
+export interface InstallScriptSignal {
+  type: 'install-script';
+  hooks: string[];
+}
+
 export type RiskSignal =
   | CveSignal
   | EolSignal
@@ -76,7 +81,8 @@ export type RiskSignal =
   | OutdatedSignal
   | TyposquatSignal
   | LicenseSignal
-  | MaintainerSignal;
+  | MaintainerSignal
+  | InstallScriptSignal;
 
 export interface DependencyResult {
   name: string;
@@ -116,5 +122,6 @@ export interface ScanOptions {
   noTyposquat: boolean;
   noLicense: boolean;
   noMaintainer: boolean;
+  noInstallScript: boolean;
   directOnly: boolean;
 }

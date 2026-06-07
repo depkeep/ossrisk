@@ -16,6 +16,7 @@ import { checkOutdated } from './checkers/outdated.js';
 import { checkTyposquat } from './checkers/typosquat.js';
 import { checkLicense } from './checkers/license.js';
 import { checkMaintainer } from './checkers/maintainer.js';
+import { checkInstallScript } from './checkers/install-script.js';
 import { parseNpm } from './parsers/npm.js';
 import { parsePython } from './parsers/python.js';
 
@@ -27,7 +28,8 @@ function signalRisk(s: RiskSignal): RiskLevel {
     case 'eol':        return 'high';
     case 'typosquat':  return 'high';
     case 'license':    return s.category === 'strong-copyleft' ? 'medium' : 'low';
-    case 'maintainer': return s.pattern === 'new-publisher' ? 'medium' : 'low';
+    case 'maintainer':      return s.pattern === 'new-publisher' ? 'medium' : 'low';
+    case 'install-script':   return 'low';
     case 'abandoned':  return 'medium';
     case 'stale':      return 'low';
     case 'outdated':   return 'low';
@@ -82,8 +84,9 @@ export async function scan(opts: ScanOptions): Promise<ScanResult> {
           ...(!opts.noActivity   ? await checkActivity(dep)   : []),
           ...(!opts.noOutdated   ? await checkOutdated(dep)   : []),
           ...(!opts.noLicense    ? await checkLicense(dep)    : []),
-          ...(!opts.noMaintainer ? await checkMaintainer(dep) : []),
-          ...(!opts.noTyposquat  ? checkTyposquat(dep)        : []),
+          ...(!opts.noMaintainer    ? await checkMaintainer(dep)    : []),
+          ...(!opts.noInstallScript ? await checkInstallScript(dep) : []),
+          ...(!opts.noTyposquat     ? checkTyposquat(dep)           : []),
         ];
         return {
           name: dep.name,

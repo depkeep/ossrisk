@@ -63,6 +63,9 @@ export function renderTable(result: ScanResult): string {
       if (s.type === 'maintainer') {
         return s.pattern === 'new-publisher' ? 'new publisher' : 'sole maintainer';
       }
+      if (s.type === 'install-script') {
+        return `install hooks: ${s.hooks.join(', ')}`;
+      }
     }).join('  ');
 
     const isClean = dep.riskLevel === 'none';
