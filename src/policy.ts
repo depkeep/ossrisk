@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
-import { basename, dirname } from 'path';
+import { existsSync } from 'fs';
+import { basename, delimiter, dirname, join } from 'path';
 import type { ScanResult } from './types.js';
 
 // ossrisk delegates policy decisions to OPA (https://www.openpolicyagent.org).
@@ -18,9 +19,41 @@ export interface OpaRunResult {
 
 export type RunOpa = (args: string[], stdin: string, cwd: string) => Promise<OpaRunResult>;
 
+// Resolve `opa` to an absolute path instead of letting spawn() search for it.
+// spawn('opa', { cwd }) searches the *child's* cwd on Windows, and
+// evaluatePolicy overrides cwd to the policy directory — so a bare command
+// name would resolve differently there than in the preflight check.
+// Search order mirrors Windows convention: current directory (Windows only),
+// then PATH.
+export function resolveOpaPath(
+  env: NodeJS.ProcessEnv = process.env,
+  cwd: string = process.cwd()
+): string | null {
+  const isWin = process.platform === 'win32';
+  const exts = isWin
+    ? (env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)
+    : [''];
+  const dirs = [
+    ...(isWin ? [cwd] : []),
+    ...(env.PATH ?? '').split(delimiter).filter(Boolean),
+  ];
+  for (const dir of dirs) {
+    for (const ext of exts) {
+      const candidate = join(dir, 'opa' + ext.toLowerCase());
+      if (existsSync(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
 const runOpaProcess: RunOpa = (args, stdin, cwd) =>
   new Promise(resolvePromise => {
-    const child = spawn('opa', args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    const opa = resolveOpaPath();
+    if (!opa) {
+      resolvePromise({ code: null, stdout: '', stderr: '', notFound: true });
+      return;
+    }
+    const child = spawn(opa, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', d => (stdout += d));
@@ -36,6 +69,18 @@ const runOpaProcess: RunOpa = (args, stdin, cwd) =>
 
 interface OpaEvalOutput {
   result?: Array<{ expressions?: Array<{ value?: unknown }> }>;
+}
+
+const OPA_MISSING_MESSAGE =
+  '--policy requires the OPA CLI (`opa`) on your PATH. ' +
+  'Install it from https://www.openpolicyagent.org/docs/#running-opa, ' +
+  'or pipe `ossrisk --format json` into conftest instead.';
+
+// Preflight check so a missing opa binary fails before the scan starts,
+// not after minutes of network calls.
+export async function assertOpaAvailable(run: RunOpa = runOpaProcess): Promise<void> {
+  const res = await run(['version'], '', '.');
+  if (res.notFound) throw new Error(OPA_MISSING_MESSAGE);
 }
 
 export async function evaluatePolicy(
@@ -61,11 +106,7 @@ export async function evaluatePolicy(
   const res = await run(args, JSON.stringify(result), cwd);
 
   if (res.notFound) {
-    throw new Error(
-      '--policy requires the OPA CLI (`opa`) on your PATH. ' +
-      'Install it from https://www.openpolicyagent.org/docs/#running-opa, ' +
-      'or pipe `ossrisk --format json` into conftest instead.'
-    );
+    throw new Error(OPA_MISSING_MESSAGE);
   }
   if (res.code !== 0) {
     const detail = res.stderr.trim() || res.stdout.trim() || `opa exited with code ${res.code}`;

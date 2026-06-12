@@ -77,6 +77,13 @@ export interface ScanResult {
     results: DependencyResult[];
     summary: ScanSummary;
 }
+export interface ScanProgressEvent {
+    phase: 'cve' | 'checks' | 'done';
+    completed: number;
+    total: number;
+    current?: string;
+}
+export type ProgressCallback = (event: ScanProgressEvent) => void;
 export interface ScanOptions {
     path: string;
     format: 'table' | 'json' | 'markdown';

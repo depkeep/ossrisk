@@ -110,6 +110,18 @@ export interface ScanResult {
   summary: ScanSummary;
 }
 
+export interface ScanProgressEvent {
+  // 'cve' fires once before the batched OSV query; 'checks' fires as each
+  // dependency finishes its per-dep checkers; 'done' fires once at the end.
+  phase: 'cve' | 'checks' | 'done';
+  completed: number;
+  total: number;
+  // "name@version" of the dependency that just completed (checks phase only).
+  current?: string;
+}
+
+export type ProgressCallback = (event: ScanProgressEvent) => void;
+
 export interface ScanOptions {
   path: string;
   format: 'table' | 'json' | 'markdown';

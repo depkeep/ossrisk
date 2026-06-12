@@ -1,5 +1,8 @@
+import { mkdtempSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { describe, it, expect, vi } from 'vitest';
-import { evaluatePolicy } from '../src/policy.js';
+import { assertOpaAvailable, evaluatePolicy, resolveOpaPath } from '../src/policy.js';
 import type { RunOpa } from '../src/policy.js';
 import type { ScanResult } from '../src/types.js';
 
@@ -26,6 +29,48 @@ function opaOutput(value: unknown) {
 function runReturning(stdout: string): RunOpa {
   return vi.fn().mockResolvedValue({ code: 0, stdout, stderr: '' });
 }
+
+const OPA_BINARY = process.platform === 'win32' ? 'opa.exe' : 'opa';
+
+function tempDirWithOpa(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'ossrisk-opa-'));
+  writeFileSync(join(dir, OPA_BINARY), '');
+  return dir;
+}
+
+describe('resolveOpaPath', () => {
+  it('finds opa on PATH', () => {
+    const dir = tempDirWithOpa();
+    const found = resolveOpaPath({ PATH: dir, PATHEXT: '.EXE' }, mkdtempSync(join(tmpdir(), 'ossrisk-cwd-')));
+    expect(found).toBe(join(dir, OPA_BINARY));
+  });
+
+  it.runIf(process.platform === 'win32')('finds opa.exe in the current directory on Windows', () => {
+    const cwd = tempDirWithOpa();
+    const found = resolveOpaPath({ PATH: '', PATHEXT: '.EXE' }, cwd);
+    expect(found).toBe(join(cwd, 'opa.exe'));
+  });
+
+  it('returns null when opa is nowhere to be found', () => {
+    const empty = mkdtempSync(join(tmpdir(), 'ossrisk-empty-'));
+    expect(resolveOpaPath({ PATH: empty, PATHEXT: '.EXE' }, empty)).toBeNull();
+  });
+});
+
+describe('assertOpaAvailable', () => {
+  it('resolves when the opa binary runs', async () => {
+    const run: RunOpa = vi.fn().mockResolvedValue({ code: 0, stdout: 'Version: 1.0', stderr: '' });
+    await expect(assertOpaAvailable(run)).resolves.toBeUndefined();
+    expect(run).toHaveBeenCalledWith(['version'], '', '.');
+  });
+
+  it('throws the install hint when the opa binary is missing', async () => {
+    const run: RunOpa = vi
+      .fn()
+      .mockResolvedValue({ code: null, stdout: '', stderr: '', notFound: true });
+    await expect(assertOpaAvailable(run)).rejects.toThrow(/requires the OPA CLI/);
+  });
+});
 
 describe('evaluatePolicy', () => {
   it('returns deny messages from opa output', async () => {

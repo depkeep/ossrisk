@@ -4,6 +4,7 @@ import type {
   CveSignal,
   Dependency,
   DependencyResult,
+  ProgressCallback,
   RiskLevel,
   RiskSignal,
   ScanOptions,
@@ -61,18 +62,25 @@ async function detectAndParse(dir: string): Promise<{ deps: Dependency[]; manife
   );
 }
 
-export async function scan(opts: ScanOptions): Promise<ScanResult> {
+export async function scan(
+  opts: ScanOptions,
+  onProgress?: ProgressCallback
+): Promise<ScanResult> {
   const all = await detectAndParse(opts.path);
   const manifest = all.manifest;
   const deps = opts.directOnly ? all.deps.filter(d => d.isDirect) : all.deps;
 
   // CVEs: one batched API call for all deps
+  if (!opts.noCve) {
+    onProgress?.({ phase: 'cve', completed: 0, total: deps.length });
+  }
   const cveMap = opts.noCve
     ? new Map<string, CveSignal[]>()
     : await checkCvesBatch(deps);
 
   // EOL + activity: per-dep, run concurrently in controlled batches
   const results: DependencyResult[] = [];
+  let completed = 0;
 
   for (let i = 0; i < deps.length; i += opts.concurrency) {
     const batch = deps.slice(i, i + opts.concurrency);
@@ -88,6 +96,13 @@ export async function scan(opts: ScanOptions): Promise<ScanResult> {
           ...(!opts.noInstallScript ? await checkInstallScript(dep) : []),
           ...(!opts.noTyposquat     ? checkTyposquat(dep)           : []),
         ];
+        completed++;
+        onProgress?.({
+          phase: 'checks',
+          completed,
+          total: deps.length,
+          current: `${dep.name}@${dep.version}`,
+        });
         return {
           name: dep.name,
           version: dep.version,
@@ -101,6 +116,8 @@ export async function scan(opts: ScanOptions): Promise<ScanResult> {
     );
     results.push(...batchResults);
   }
+
+  onProgress?.({ phase: 'done', completed: deps.length, total: deps.length });
 
   results.sort(
     (a, b) => RISK_ORDER.indexOf(b.riskLevel) - RISK_ORDER.indexOf(a.riskLevel)
