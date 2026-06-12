@@ -45,16 +45,20 @@ async function detectAndParse(dir) {
     }
     throw new Error('No supported manifest found. Supported: package.json, Pipfile.lock, requirements.txt');
 }
-export async function scan(opts) {
+export async function scan(opts, onProgress) {
     const all = await detectAndParse(opts.path);
     const manifest = all.manifest;
     const deps = opts.directOnly ? all.deps.filter(d => d.isDirect) : all.deps;
     // CVEs: one batched API call for all deps
+    if (!opts.noCve) {
+        onProgress?.({ phase: 'cve', completed: 0, total: deps.length });
+    }
     const cveMap = opts.noCve
         ? new Map()
         : await checkCvesBatch(deps);
     // EOL + activity: per-dep, run concurrently in controlled batches
     const results = [];
+    let completed = 0;
     for (let i = 0; i < deps.length; i += opts.concurrency) {
         const batch = deps.slice(i, i + opts.concurrency);
         const batchResults = await Promise.all(batch.map(async (dep) => {
@@ -68,6 +72,13 @@ export async function scan(opts) {
                 ...(!opts.noInstallScript ? await checkInstallScript(dep) : []),
                 ...(!opts.noTyposquat ? checkTyposquat(dep) : []),
             ];
+            completed++;
+            onProgress?.({
+                phase: 'checks',
+                completed,
+                total: deps.length,
+                current: `${dep.name}@${dep.version}`,
+            });
             return {
                 name: dep.name,
                 version: dep.version,
@@ -80,6 +91,7 @@ export async function scan(opts) {
         }));
         results.push(...batchResults);
     }
+    onProgress?.({ phase: 'done', completed: deps.length, total: deps.length });
     results.sort((a, b) => RISK_ORDER.indexOf(b.riskLevel) - RISK_ORDER.indexOf(a.riskLevel));
     const summary = {
         total: results.length,

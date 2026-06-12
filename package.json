@@ -1,6 +1,6 @@
 {
   "name": "ossrisk",
-  "version": "0.7.0",
+  "version": "0.7.5",
   "description": "Scan dependencies for supply-chain risk: EOL versions, CVEs, abandonment, typosquatting, license compliance, maintainer takeover patterns, and OPA policy gating",
   "type": "module",
   "bin": {
@@ -25,7 +25,18 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test"
   },
-  "keywords": ["security", "dependencies", "cve", "eol", "supply-chain", "sbom", "cli", "opa", "policy", "rego"],
+  "keywords": [
+    "security",
+    "dependencies",
+    "cve",
+    "eol",
+    "supply-chain",
+    "sbom",
+    "cli",
+    "opa",
+    "policy",
+    "rego"
+  ],
   "author": "DepKeep <hello@depkeep.com>",
   "license": "MIT",
   "dependencies": {

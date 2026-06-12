@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import { Command } from 'commander';
 import { scan } from './scanner.js';
-import { evaluatePolicy } from './policy.js';
+import { assertOpaAvailable, evaluatePolicy } from './policy.js';
 import { renderTable } from './output/table.js';
 import { renderMarkdown } from './output/markdown.js';
+import { createProgressRenderer } from './output/progress.js';
 import type { RiskLevel, ScanOptions } from './types.js';
 
 function readVersion(): string {
@@ -68,19 +69,24 @@ program
       directOnly:      !!options.directOnly,
     };
 
+    const progress = createProgressRenderer();
     try {
-      if (opts.format === 'table') {
-        process.stdout.write('\r  Scanning…');
+      // Fail fast on policy misconfiguration before spending time on the scan.
+      if (opts.policy) {
+        if (!existsSync(opts.policy)) {
+          throw new Error(`policy path not found: ${opts.policy}`);
+        }
+        await assertOpaAvailable();
       }
 
-      const result = await scan(opts);
+      const result = await scan(opts, progress?.onProgress);
+      progress?.clear();
 
       if (opts.format === 'json') {
         console.log(JSON.stringify(result, null, 2));
       } else if (opts.format === 'markdown') {
         console.log(renderMarkdown(result));
       } else {
-        process.stdout.write('\r' + ' '.repeat(20) + '\r');
         console.log(renderTable(result));
       }
 
@@ -104,7 +110,8 @@ program
 
       if (breached) process.exit(1);
     } catch (err) {
-      console.error(`\n  error: ${(err as Error).message}`);
+      progress?.clear();
+      console.error(`  error: ${(err as Error).message}`);
       process.exit(2);
     }
   });
