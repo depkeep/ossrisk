@@ -114,6 +114,9 @@ export interface ScanOptions {
   path: string;
   format: 'table' | 'json' | 'markdown';
   failOn: RiskLevel | 'none';
+  // Path to an OPA Rego policy file or directory. When set, scan results are
+  // evaluated against data.ossrisk.deny and any violation fails the scan.
+  policy?: string;
   concurrency: number;
   noEol: boolean;
   noCve: boolean;
