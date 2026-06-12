@@ -35,6 +35,7 @@ ossrisk [path] [options]
 | `[path]` | `.` | Path to project directory to scan |
 | `-f, --format <fmt>` | `table` | Output format: `table`, `json`, `markdown` |
 | `--fail-on <level>` | `high` | Exit 1 if any dep reaches this risk level (`none`\|`low`\|`medium`\|`high`\|`critical`) |
+| `--policy <path>` | | Evaluate results against OPA Rego policies — file or directory (requires the [opa CLI](https://www.openpolicyagent.org/docs/#running-opa)) |
 | `-c, --concurrency <n>` | `8` | Concurrent API requests per batch |
 | `--no-eol` | | Skip EOL checks |
 | `--no-cve` | | Skip CVE checks |
@@ -63,6 +64,9 @@ ossrisk . --fail-on medium
 
 # Skip CVE checks, output markdown
 ossrisk . --no-cve --format markdown
+
+# Gate entirely on an OPA Rego policy
+ossrisk . --fail-on none --policy ./policy/supply-chain.rego
 ```
 
 ---
@@ -167,6 +171,46 @@ When `github-token` is provided and the workflow runs on a pull request, ossrisk
 | Output | Description |
 |---|---|
 | `risk-level` | Highest risk level found across all dependencies |
+
+---
+
+## Policy as code (OPA)
+
+`--fail-on` is a single threshold. For richer rules — "no critical CVEs anywhere, no strong-copyleft in *direct* deps, block install scripts from brand-new publishers" — ossrisk integrates with [Open Policy Agent](https://www.openpolicyagent.org):
+
+```bash
+ossrisk . --fail-on none --policy ./policy/supply-chain.rego
+```
+
+Requires the [`opa` CLI](https://www.openpolicyagent.org/docs/#running-opa) on your PATH. `--policy` accepts a single `.rego` file or a directory of policies.
+
+Policies receive the scan result as `input` — the same JSON that `ossrisk --format json` prints, which is a stable contract. They live in `package ossrisk` and add messages to a `deny` set; any message is reported as a violation and makes ossrisk exit 1:
+
+```rego
+package ossrisk
+
+import rego.v1
+
+# Block strong copyleft, but only for direct dependencies.
+deny contains msg if {
+	some dep in input.results
+	dep.isDirect
+	some sig in dep.signals
+	sig.type == "license"
+	sig.category == "strong-copyleft"
+	msg := sprintf("%s@%s is %s (strong copyleft)", [dep.name, dep.version, sig.license])
+}
+```
+
+See [examples/policies/supply-chain.rego](examples/policies/supply-chain.rego) for a fuller policy, including a cross-signal rule for the event-stream takeover pattern (install scripts + new publisher).
+
+`--fail-on` and `--policy` are independent — either can fail the scan. Use `--fail-on none` to delegate gating entirely to your policy. Violations print to stderr, so `--format json` output stays pipeable.
+
+If you'd rather not install `opa`, the JSON output also works with [conftest](https://www.conftest.dev):
+
+```bash
+ossrisk . --format json --fail-on none | conftest test --policy ./policy/ -
+```
 
 ---
 

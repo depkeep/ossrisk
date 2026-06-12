@@ -81,6 +81,7 @@ export interface ScanOptions {
     path: string;
     format: 'table' | 'json' | 'markdown';
     failOn: RiskLevel | 'none';
+    policy?: string;
     concurrency: number;
     noEol: boolean;
     noCve: boolean;

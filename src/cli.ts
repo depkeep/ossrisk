@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import { Command } from 'commander';
 import { scan } from './scanner.js';
+import { evaluatePolicy } from './policy.js';
 import { renderTable } from './output/table.js';
 import { renderMarkdown } from './output/markdown.js';
 import type { RiskLevel, ScanOptions } from './types.js';
@@ -38,6 +39,7 @@ program
   .argument('[path]', 'Path to project directory to scan', '.')
   .option('-f, --format <fmt>',  'Output format: table | json | markdown', 'table')
   .option('--fail-on <level>',   'Exit 1 if any dep reaches this level or above (none|low|medium|high|critical)', 'high')
+  .option('--policy <path>',     'Evaluate results against OPA Rego policies — file or directory (requires the opa CLI)')
   .option('-c, --concurrency <n>', 'Concurrent API requests per batch', '8')
   .option('--no-eol',            'Skip EOL checks')
   .option('--no-cve',            'Skip CVE checks')
@@ -53,6 +55,7 @@ program
       path:        resolve(pathArg),
       format:      options.format as ScanOptions['format'],
       failOn:      options.failOn as RiskLevel,
+      policy:      options.policy ? resolve(options.policy as string) : undefined,
       concurrency: parseInt(options.concurrency, 10) || 8,
       noEol:       !options.eol,
       noCve:       !options.cve,
@@ -81,13 +84,25 @@ program
         console.log(renderTable(result));
       }
 
+      let breached = false;
+
+      if (opts.policy) {
+        // Violations go to stderr so `--format json` stdout stays pipeable.
+        const violations = await evaluatePolicy(result, opts.policy);
+        for (const msg of violations) {
+          console.error(`  policy violation: ${msg}`);
+        }
+        if (violations.length > 0) breached = true;
+      }
+
       if (opts.failOn !== 'none') {
         const threshold = RISK_ORDER.indexOf(opts.failOn);
-        const breached = result.results.some(
+        breached ||= result.results.some(
           r => RISK_ORDER.indexOf(r.riskLevel) >= threshold
         );
-        if (breached) process.exit(1);
       }
+
+      if (breached) process.exit(1);
     } catch (err) {
       console.error(`\n  error: ${(err as Error).message}`);
       process.exit(2);
