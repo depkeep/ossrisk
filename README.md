@@ -206,12 +206,6 @@ See [examples/policies/supply-chain.rego](examples/policies/supply-chain.rego) f
 
 `--fail-on` and `--policy` are independent — either can fail the scan. Use `--fail-on none` to delegate gating entirely to your policy. Violations print to stderr, so `--format json` output stays pipeable.
 
-If you'd rather not install `opa`, the JSON output also works with [conftest](https://www.conftest.dev):
-
-```bash
-ossrisk . --format json --fail-on none | conftest test --policy ./policy/ -
-```
-
 ---
 
 ## Programmatic API
