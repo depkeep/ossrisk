@@ -122,9 +122,11 @@ export interface ScanProgressEvent {
 
 export type ProgressCallback = (event: ScanProgressEvent) => void;
 
+export type OutputFormat = 'table' | 'json' | 'markdown' | 'cyclonedx' | 'spdx';
+
 export interface ScanOptions {
   path: string;
-  format: 'table' | 'json' | 'markdown';
+  format: OutputFormat;
   failOn: RiskLevel | 'none';
   // Path to an OPA Rego policy file or directory. When set, scan results are
   // evaluated against data.ossrisk.deny and any violation fails the scan.
