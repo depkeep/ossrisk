@@ -46,6 +46,7 @@ ossrisk [path] [options]
 | `--no-maintainer` | | Skip maintainer/publisher checks |
 | `--no-install-script` | | Skip install-script (preinstall/postinstall) checks |
 | `--direct-only` | | Scan only direct dependencies, skip transitives |
+| `--list-checkers` | | List the available risk checkers and exit |
 
 ### Examples
 
@@ -168,6 +169,31 @@ transitive) becomes a component/package identified by a
 > Tip: pair `--format cyclonedx`/`spdx` with `--fail-on none` when you only want
 > the artifact — otherwise a risky dependency still makes the process exit 1
 > (useful if you want CI to both produce an SBOM *and* gate on risk).
+
+---
+
+## Checkers
+
+Each risk dimension is an independent **checker** registered against a common
+interface. `ossrisk --list-checkers` prints the active set:
+
+```
+cve             Known CVEs / advisories via the OSV batch API
+eol             End-of-life runtime/framework versions
+activity        Abandonment / staleness from last-release date
+outdated        A newer version is available
+license         Copyleft / unknown license compliance
+maintainer      New-publisher / sole-maintainer takeover patterns
+install-script  preinstall / install / postinstall lifecycle hooks
+typosquat       Typosquat of a popular package (local, no API)
+```
+
+Every checker has a matching `--no-<name>` flag to skip it. A checker either
+runs once over all dependencies (a batched `batch` pre-pass, like `cve`) or
+per-dependency (a `check`), returning risk signals that are merged into the
+report. The registry lives in [`src/checkers/index.ts`](src/checkers/index.ts) —
+adding a dimension is a matter of implementing the `Checker` interface and
+appending it there.
 
 ---
 
