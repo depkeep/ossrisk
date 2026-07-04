@@ -84,6 +84,13 @@ export interface ScanProgressEvent {
     current?: string;
 }
 export type ProgressCallback = (event: ScanProgressEvent) => void;
+export interface Checker {
+    name: string;
+    description: string;
+    enabled: (opts: ScanOptions) => boolean;
+    batch?: (deps: Dependency[]) => Promise<Map<string, RiskSignal[]>>;
+    check?: (dep: Dependency) => RiskSignal[] | Promise<RiskSignal[]>;
+}
 export type OutputFormat = 'table' | 'json' | 'markdown' | 'cyclonedx' | 'spdx';
 export interface ScanOptions {
     path: string;

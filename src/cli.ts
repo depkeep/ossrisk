@@ -8,6 +8,7 @@ import { assertOpaAvailable, evaluatePolicy } from './policy.js';
 import { renderTable } from './output/table.js';
 import { renderMarkdown } from './output/markdown.js';
 import { renderCycloneDx, renderSpdx } from './output/sbom.js';
+import { CHECKERS } from './checkers/index.js';
 import { createProgressRenderer } from './output/progress.js';
 import type { RiskLevel, ScanOptions } from './types.js';
 
@@ -54,7 +55,16 @@ program
   .option('--no-maintainer',     'Skip maintainer/publisher checks')
   .option('--no-install-script', 'Skip install-script (preinstall/postinstall) checks')
   .option('--direct-only',       'Scan only direct dependencies, skip transitives')
+  .option('--list-checkers',     'List the available risk checkers and exit')
   .action(async (pathArg: string, options) => {
+    if (options.listCheckers) {
+      const width = Math.max(...CHECKERS.map(c => c.name.length));
+      for (const c of CHECKERS) {
+        console.log(`  ${c.name.padEnd(width)}  ${c.description}`);
+      }
+      return;
+    }
+
     const opts: ScanOptions = {
       path:        resolve(pathArg),
       format:      options.format as ScanOptions['format'],

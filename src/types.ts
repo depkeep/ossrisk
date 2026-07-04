@@ -122,6 +122,24 @@ export interface ScanProgressEvent {
 
 export type ProgressCallback = (event: ScanProgressEvent) => void;
 
+// A pluggable risk checker. The scanner runs every registered checker whose
+// `enabled(opts)` returns true. A checker may provide a one-shot `batch`
+// pre-pass (e.g. a single batched API query for all deps), a per-dependency
+// `check`, or both. Third parties can extend the registry in checkers/index.ts.
+export interface Checker {
+  // Stable id; also the stem of its `--no-<name>` CLI flag.
+  name: string;
+  // One-line description shown by `--list-checkers`.
+  description: string;
+  // Whether this checker runs, given the scan options.
+  enabled: (opts: ScanOptions) => boolean;
+  // Optional pre-pass over all deps at once, returning signals keyed by
+  // `${name}@${version}` to be merged into each dependency's results.
+  batch?: (deps: Dependency[]) => Promise<Map<string, RiskSignal[]>>;
+  // Optional per-dependency check; may be sync or async.
+  check?: (dep: Dependency) => RiskSignal[] | Promise<RiskSignal[]>;
+}
+
 export type OutputFormat = 'table' | 'json' | 'markdown' | 'cyclonedx' | 'spdx';
 
 export interface ScanOptions {

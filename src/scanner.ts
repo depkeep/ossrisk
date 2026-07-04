@@ -1,7 +1,6 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 import type {
-  CveSignal,
   Dependency,
   DependencyResult,
   ProgressCallback,
@@ -10,14 +9,7 @@ import type {
   ScanOptions,
   ScanResult,
 } from './types.js';
-import { checkCvesBatch } from './checkers/osv.js';
-import { checkActivity } from './checkers/activity.js';
-import { checkEol } from './checkers/eol.js';
-import { checkOutdated } from './checkers/outdated.js';
-import { checkTyposquat } from './checkers/typosquat.js';
-import { checkLicense } from './checkers/license.js';
-import { checkMaintainer } from './checkers/maintainer.js';
-import { checkInstallScript } from './checkers/install-script.js';
+import { CHECKERS } from './checkers/index.js';
 import { parseNpm } from './parsers/npm.js';
 import { parsePython } from './parsers/python.js';
 
@@ -70,15 +62,21 @@ export async function scan(
   const manifest = all.manifest;
   const deps = opts.directOnly ? all.deps.filter(d => d.isDirect) : all.deps;
 
-  // CVEs: one batched API call for all deps
-  if (!opts.noCve) {
-    onProgress?.({ phase: 'cve', completed: 0, total: deps.length });
-  }
-  const cveMap = opts.noCve
-    ? new Map<string, CveSignal[]>()
-    : await checkCvesBatch(deps);
+  const active = CHECKERS.filter(c => c.enabled(opts));
+  const batchCheckers = active.filter(c => c.batch);
+  const perDepCheckers = active.filter(c => c.check);
 
-  // EOL + activity: per-dep, run concurrently in controlled batches
+  // Batch pre-pass: each batch checker (e.g. the OSV CVE query) runs once over
+  // all deps, producing signals keyed by `${name}@${version}`.
+  const batchMaps: Map<string, RiskSignal[]>[] = [];
+  if (batchCheckers.length > 0) {
+    onProgress?.({ phase: 'cve', completed: 0, total: deps.length });
+    for (const checker of batchCheckers) {
+      batchMaps.push(await checker.batch!(deps));
+    }
+  }
+
+  // Per-dep checks: run concurrently in controlled batches.
   const results: DependencyResult[] = [];
   let completed = 0;
 
@@ -86,22 +84,21 @@ export async function scan(
     const batch = deps.slice(i, i + opts.concurrency);
     const batchResults = await Promise.all(
       batch.map(async (dep): Promise<DependencyResult> => {
-        const signals: RiskSignal[] = [
-          ...(cveMap.get(`${dep.name}@${dep.version}`) ?? []),
-          ...(!opts.noEol        ? await checkEol(dep)        : []),
-          ...(!opts.noActivity   ? await checkActivity(dep)   : []),
-          ...(!opts.noOutdated   ? await checkOutdated(dep)   : []),
-          ...(!opts.noLicense    ? await checkLicense(dep)    : []),
-          ...(!opts.noMaintainer    ? await checkMaintainer(dep)    : []),
-          ...(!opts.noInstallScript ? await checkInstallScript(dep) : []),
-          ...(!opts.noTyposquat     ? checkTyposquat(dep)           : []),
-        ];
+        const key = `${dep.name}@${dep.version}`;
+        const signals: RiskSignal[] = [];
+        for (const map of batchMaps) {
+          const found = map.get(key);
+          if (found) signals.push(...found);
+        }
+        for (const checker of perDepCheckers) {
+          signals.push(...await checker.check!(dep));
+        }
         completed++;
         onProgress?.({
           phase: 'checks',
           completed,
           total: deps.length,
-          current: `${dep.name}@${dep.version}`,
+          current: key,
         });
         return {
           name: dep.name,
