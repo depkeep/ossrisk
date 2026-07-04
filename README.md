@@ -33,7 +33,7 @@ ossrisk [path] [options]
 | Option | Default | Description |
 |---|---|---|
 | `[path]` | `.` | Path to project directory to scan |
-| `-f, --format <fmt>` | `table` | Output format: `table`, `json`, `markdown` |
+| `-f, --format <fmt>` | `table` | Output format: `table`, `json`, `markdown`, `cyclonedx`, `spdx` |
 | `--fail-on <level>` | `high` | Exit 1 if any dep reaches this risk level (`none`\|`low`\|`medium`\|`high`\|`critical`) |
 | `--policy <path>` | | Evaluate results against OPA Rego policies — file or directory (requires the [opa CLI](https://www.openpolicyagent.org/docs/#running-opa)) |
 | `-c, --concurrency <n>` | `8` | Concurrent API requests per batch |
@@ -67,6 +67,12 @@ ossrisk . --no-cve --format markdown
 
 # Gate entirely on an OPA Rego policy
 ossrisk . --fail-on none --policy ./policy/supply-chain.rego
+
+# Export a CycloneDX SBOM (with the CVEs ossrisk found embedded)
+ossrisk . --fail-on none --format cyclonedx > sbom.cdx.json
+
+# Export an SPDX SBOM
+ossrisk . --fail-on none --format spdx > sbom.spdx.json
 ```
 
 ---
@@ -132,6 +138,36 @@ ossrisk compares each dependency name against a curated list of popular npm and 
 packages, flagging anything within edit distance 2 or matching common homoglyph
 substitutions (e.g. `rn` ↔ `m`, `1` ↔ `l`). A scoped package like `@vendor/lodash`
 is compared by its basename. The check is purely local — no API calls.
+
+---
+
+## SBOM export
+
+ossrisk can emit a Software Bill of Materials over the same resolved dependency
+tree it scans, in either of the two industry-standard formats:
+
+```bash
+ossrisk . --fail-on none --format cyclonedx > sbom.cdx.json   # CycloneDX 1.5
+ossrisk . --fail-on none --format spdx      > sbom.spdx.json   # SPDX 2.3
+```
+
+Both documents are written to stdout as JSON. Every dependency (direct and
+transitive) becomes a component/package identified by a
+[package URL](https://github.com/package-url/purl-spec) — e.g.
+`pkg:npm/lodash@4.17.11`, `pkg:pypi/django@3.2.0`.
+
+- **CycloneDX** additionally folds ossrisk's findings back into the document: any
+  CVEs are written to the standard `vulnerabilities` section (with OSV as the
+  source and severity ratings), declared non-permissive licenses appear under
+  `licenses`, and each component carries `ossrisk:riskLevel` / `ossrisk:direct` /
+  `ossrisk:via` properties. So the SBOM doubles as a vulnerability report.
+- **SPDX** lists each package with its purl external reference and declared
+  license (falling back to `NOASSERTION` when ossrisk didn't resolve one), plus a
+  `DESCRIBES` relationship from the document to every package.
+
+> Tip: pair `--format cyclonedx`/`spdx` with `--fail-on none` when you only want
+> the artifact — otherwise a risky dependency still makes the process exit 1
+> (useful if you want CI to both produce an SBOM *and* gate on risk).
 
 ---
 

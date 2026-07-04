@@ -7,6 +7,7 @@ import { scan } from './scanner.js';
 import { assertOpaAvailable, evaluatePolicy } from './policy.js';
 import { renderTable } from './output/table.js';
 import { renderMarkdown } from './output/markdown.js';
+import { renderCycloneDx, renderSpdx } from './output/sbom.js';
 import { createProgressRenderer } from './output/progress.js';
 function readVersion() {
     const dir = dirname(fileURLToPath(import.meta.url));
@@ -23,16 +24,17 @@ function readVersion() {
     return '0.0.0';
 }
 const RISK_ORDER = ['none', 'low', 'medium', 'high', 'critical'];
+const VERSION = readVersion();
 const program = new Command();
 program
     .name('ossrisk')
     .description('Scan dependencies for long-term viability risk:\n' +
     'EOL versions, known CVEs, and abandonment signals.\n\n' +
     'Supports: package.json (npm), requirements.txt (PyPI)')
-    .version(readVersion());
+    .version(VERSION);
 program
     .argument('[path]', 'Path to project directory to scan', '.')
-    .option('-f, --format <fmt>', 'Output format: table | json | markdown', 'table')
+    .option('-f, --format <fmt>', 'Output format: table | json | markdown | cyclonedx | spdx', 'table')
     .option('--fail-on <level>', 'Exit 1 if any dep reaches this level or above (none|low|medium|high|critical)', 'high')
     .option('--policy <path>', 'Evaluate results against OPA Rego policies — file or directory (requires the opa CLI)')
     .option('-c, --concurrency <n>', 'Concurrent API requests per batch', '8')
@@ -78,6 +80,12 @@ program
         }
         else if (opts.format === 'markdown') {
             console.log(renderMarkdown(result));
+        }
+        else if (opts.format === 'cyclonedx') {
+            console.log(renderCycloneDx(result, VERSION));
+        }
+        else if (opts.format === 'spdx') {
+            console.log(renderSpdx(result, VERSION));
         }
         else {
             console.log(renderTable(result));

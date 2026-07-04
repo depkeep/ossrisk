@@ -84,9 +84,10 @@ export interface ScanProgressEvent {
     current?: string;
 }
 export type ProgressCallback = (event: ScanProgressEvent) => void;
+export type OutputFormat = 'table' | 'json' | 'markdown' | 'cyclonedx' | 'spdx';
 export interface ScanOptions {
     path: string;
-    format: 'table' | 'json' | 'markdown';
+    format: OutputFormat;
     failOn: RiskLevel | 'none';
     policy?: string;
     concurrency: number;
